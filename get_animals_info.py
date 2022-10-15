@@ -37,10 +37,14 @@ def get_info_list_by_page(API_Key, date, page_number):
     info_list = data['response']['body']['items']['item']
     return info_list
 
-load_dotenv()
-API_Key, date = get_requests_params("ApiKey", 10)
-animal_info_totalCount, animal_info_totalPages = get_total_count_pages(API_Key, date)
+def main():
+    load_dotenv()
+    API_Key, date = get_requests_params("ApiKey", 10)
+    animal_info_totalCount, animal_info_totalPages = get_total_count_pages(API_Key, date)
 
-for page_number in range(1, animal_info_totalPages+1):
-    for idx, info_dict in enumerate(tqdm(get_info_list_by_page(API_Key, date, page_number))):
-        print(info_dict)
+    for page_number in range(1, animal_info_totalPages+1):
+        for idx, info_dict in enumerate(tqdm(get_info_list_by_page(API_Key, date, page_number))):
+            print(info_dict)
+
+if __name__ == "__main__":
+    main()
