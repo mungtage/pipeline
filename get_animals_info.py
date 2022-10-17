@@ -97,7 +97,7 @@ def main():
     start = time.time()
     
     data = get_data()
-    df = preprocess_data(data[:10])
+    df = preprocess_data(data)
     
     query_insert = make_query_insert(df.columns.to_list())
     result_data = df.to_dict('records')
