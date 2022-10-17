@@ -8,6 +8,7 @@ from pytz import timezone
 from pprint import pprint
 import pymysql
 import pandas as pd
+from utils.querys import make_insert_query
 
 def get_url(API_Key, date, page_number = 1):
     dog_code = 417000
@@ -59,12 +60,10 @@ def get_data():
     
     return list_of_dict
 
-def post_data(data):
+def post_data(query, data):
     db = pymysql.connect(host='101.101.210.225', user='jaeho', password='1234', db='openapi', charset='utf8')
     try:
         with db.cursor() as cursor:
-            query = '''INSERT INTO animal_info (age, careAddr, careNm, careTel, chargeNm, colorCd, desertionNo, filename, happenDt, happenPlace, kindCd, neuterYn, noticeEdt, noticeNo, noticeSdt, officetel, orgNm, popfile, processState, sexCd, specialMark, weight)
-                VALUES(%(age)s, %(careAddr)s, %(careNm)s, %(careTel)s, %(chargeNm)s, %(colorCd)s, %(desertionNo)s, %(filename)s, %(happenDt)s, %(happenPlace)s, %(kindCd)s, %(neuterYn)s, %(noticeEdt)s, %(noticeNo)s, %(noticeSdt)s, %(officetel)s, %(orgNm)s, %(popfile)s, %(processState)s, %(sexCd)s, %(specialMark)s, %(weight)s);'''
             cursor.executemany(query, data)
             db.commit()
     finally:
@@ -73,8 +72,9 @@ def post_data(data):
 def main():
     data = get_data()
     df = preprocess_data(data)
+    query = make_insert_query(df.columns.to_list())
     result_data = df.to_dict('records')
-    post_data(result_data)
+    post_data(query, result_data)
     
 if __name__ == "__main__":
     main()
