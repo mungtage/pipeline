@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import requests
 from tqdm import tqdm
 from datetime import datetime, timedelta
@@ -7,6 +8,8 @@ from dotenv import load_dotenv
 from pytz import timezone
 from pprint import pprint
 import pymysql
+import pandas as pd
+from utils.querys import make_query_insert, make_query_truncate
 
 def get_url(API_Key, date, page_number = 1):
     dog_code = 417000
@@ -41,7 +44,15 @@ def get_info_list_by_page(API_Key, date, page_number):
     info_list = data['response']['body']['items']['item']
     return info_list
 
+def preprocess_data(data):
+    start = time.time()
+    df = pd.DataFrame(data)
+    df = df.fillna("")
+    print(f"preprocess_data elapsed time : {time.time() - start}\n")
+    return df
+
 def get_data():
+    start = time.time()
     load_dotenv()
     API_Key, date = get_requests_params("ApiKey", 10)
     animal_info_totalCount, animal_info_totalPages = get_total_count_pages(API_Key, date)
@@ -50,24 +61,35 @@ def get_data():
         info_dict
         for page_number in range(1, animal_info_totalPages+1)
         for idx, info_dict in enumerate(tqdm(get_info_list_by_page(API_Key, date, page_number)))]
-
-    # pprint(list_of_dict)
+    print(f"get_data elapsed time : {time.time() - start}\n")
     return list_of_dict
 
-def post_data(data):
-    db = pymysql.connect(host='101.101.210.225', user='jaeho', password='1234', db='openapi', charset='utf8')
+def post_data(query_insert, data):
+    start = time.time()
+    db = pymysql.connect(host=os.environ.get('host'), 
+                         user=os.environ.get('user'), 
+                         password=os.environ.get('password'), 
+                         db=os.environ.get('db'), 
+                         charset='utf8')
     try:
         with db.cursor() as cursor:
-            query = '''INSERT INTO animal_info (age, careAddr, careNm, careTel, chargeNm, colorCd, desertionNo, filename, happenDt, happenPlace, kindCd, neuterYn, noticeEdt, noticeNo, noticeSdt, officetel, orgNm, popfile, processState, sexCd, specialMark, weight)
-                VALUES(%(age)s, %(careAddr)s, %(careNm)s, %(careTel)s, %(chargeNm)s, %(colorCd)s, %(desertionNo)s, %(filename)s, %(happenDt)s, %(happenPlace)s, %(kindCd)s, %(neuterYn)s, %(noticeEdt)s, %(noticeNo)s, %(noticeSdt)s, %(officetel)s, %(orgNm)s, %(popfile)s, %(processState)s, %(sexCd)s, %(specialMark)s, %(weight)s);'''
-            cursor.executemany(query, data)
+            cursor.execute(make_query_truncate(os.environ.get('table')))
+            cursor.executemany(query_insert, data)
             db.commit()
     finally:
         db.close()
-
-def main():
-    data = get_data()
-    post_data(data)
+    print(f"post_data elapsed time : {time.time() - start}\n")
     
+def main():
+    start = time.time()
+    
+    data = get_data()
+    df = preprocess_data(data)
+    query_insert = make_query_insert(df.columns.to_list())
+    result_data = df.to_dict('records')
+    post_data(query_insert, result_data)
+    
+    total_elapsed_time = f"total elapsed time : {time.time() - start}\n"
+    print(total_elapsed_time)
 if __name__ == "__main__":
     main()
