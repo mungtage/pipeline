@@ -44,13 +44,6 @@ def get_info_list_by_page(API_Key, date, page_number):
     info_list = data['response']['body']['items']['item']
     return info_list
 
-def preprocess_data(data):
-    start = time.time()
-    df = pd.DataFrame(data)
-    df = df.fillna("")
-    print(f"preprocess_data elapsed time : {time.time() - start}\n")
-    return df
-
 def get_data():
     start = time.time()
     load_dotenv()
@@ -63,6 +56,13 @@ def get_data():
         for idx, info_dict in enumerate(tqdm(get_info_list_by_page(API_Key, date, page_number)))]
     print(f"get_data elapsed time : {time.time() - start}\n")
     return list_of_dict
+
+def preprocess_data(data):
+    start = time.time()
+    df = pd.DataFrame(data)
+    df = df.fillna("")
+    print(f"preprocess_data elapsed time : {time.time() - start}\n")
+    return df
 
 def post_data(query_insert, data):
     start = time.time()
@@ -80,16 +80,30 @@ def post_data(query_insert, data):
         db.close()
     print(f"post_data elapsed time : {time.time() - start}\n")
     
+def image_download(df):
+    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir('./images/')])
+    current_images = set(df["desertionNo"].to_list())
+    target_images = current_images - previous_images
+    
+    current_images_json = df[df["desertionNo"].isin(target_images)][["desertionNo","popfile"]].to_dict("records")
+
+    # res = requests.get(target[0]['popfile'])
+    # open(f"./images/{target[0]['desertionNo']}.jpg", "wb").write(res.content)
+    
+    
 def main():
     start = time.time()
     
     data = get_data()
     df = preprocess_data(data)
+    
     query_insert = make_query_insert(df.columns.to_list())
     result_data = df.to_dict('records')
     post_data(query_insert, result_data)
     
-    total_elapsed_time = f"total elapsed time : {time.time() - start}\n"
+    image_download(df)
+
+    total_elapsed_time = f"total elapsed time : {time.time() - start}\n" 
     print(total_elapsed_time)
 if __name__ == "__main__":
     main()
