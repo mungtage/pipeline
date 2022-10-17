@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from pytz import timezone
 from pprint import pprint
 import pymysql
+import pandas as pd
 
 def get_url(API_Key, date, page_number = 1):
     dog_code = 417000
@@ -41,6 +42,11 @@ def get_info_list_by_page(API_Key, date, page_number):
     info_list = data['response']['body']['items']['item']
     return info_list
 
+def preprocess_data(data):
+    df = pd.DataFrame(data)
+    df = df.fillna("")
+    return df
+
 def get_data():
     load_dotenv()
     API_Key, date = get_requests_params("ApiKey", 10)
@@ -50,8 +56,7 @@ def get_data():
         info_dict
         for page_number in range(1, animal_info_totalPages+1)
         for idx, info_dict in enumerate(tqdm(get_info_list_by_page(API_Key, date, page_number)))]
-
-    # pprint(list_of_dict)
+    
     return list_of_dict
 
 def post_data(data):
@@ -67,7 +72,9 @@ def post_data(data):
 
 def main():
     data = get_data()
-    post_data(data)
+    df = preprocess_data(data)
+    result_data = df.to_dict('records')
+    post_data(result_data)
     
 if __name__ == "__main__":
     main()
