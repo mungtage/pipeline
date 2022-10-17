@@ -9,7 +9,7 @@ from pytz import timezone
 from pprint import pprint
 import pymysql
 import pandas as pd
-from utils.querys import make_insert_query
+from utils.querys import make_query_insert, make_query_truncate
 
 def get_url(API_Key, date, page_number = 1):
     dog_code = 417000
@@ -64,12 +64,17 @@ def get_data():
     print(f"get_data elapsed time : {time.time() - start}\n")
     return list_of_dict
 
-def post_data(query, data):
+def post_data(query_insert, data):
     start = time.time()
-    db = pymysql.connect(host='101.101.210.225', user='jaeho', password='1234', db='openapi', charset='utf8')
+    db = pymysql.connect(host=os.environ.get('host'), 
+                         user=os.environ.get('user'), 
+                         password=os.environ.get('password'), 
+                         db=os.environ.get('db'), 
+                         charset='utf8')
     try:
         with db.cursor() as cursor:
-            cursor.executemany(query, data)
+            cursor.execute(make_query_truncate(os.environ.get('table')))
+            cursor.executemany(query_insert, data)
             db.commit()
     finally:
         db.close()
@@ -77,11 +82,13 @@ def post_data(query, data):
     
 def main():
     start = time.time()
+    
     data = get_data()
     df = preprocess_data(data)
-    query = make_insert_query(df.columns.to_list())
+    query_insert = make_query_insert(df.columns.to_list())
     result_data = df.to_dict('records')
-    post_data(query, result_data)
+    post_data(query_insert, result_data)
+    
     total_elapsed_time = f"total elapsed time : {time.time() - start}\n"
     print(total_elapsed_time)
 if __name__ == "__main__":
