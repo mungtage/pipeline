@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import requests
 from tqdm import tqdm
 from datetime import datetime, timedelta
@@ -44,11 +45,14 @@ def get_info_list_by_page(API_Key, date, page_number):
     return info_list
 
 def preprocess_data(data):
+    start = time.time()
     df = pd.DataFrame(data)
     df = df.fillna("")
+    print(f"preprocess_data elapsed time : {time.time() - start}\n")
     return df
 
 def get_data():
+    start = time.time()
     load_dotenv()
     API_Key, date = get_requests_params("ApiKey", 10)
     animal_info_totalCount, animal_info_totalPages = get_total_count_pages(API_Key, date)
@@ -57,10 +61,11 @@ def get_data():
         info_dict
         for page_number in range(1, animal_info_totalPages+1)
         for idx, info_dict in enumerate(tqdm(get_info_list_by_page(API_Key, date, page_number)))]
-    
+    print(f"get_data elapsed time : {time.time() - start}\n")
     return list_of_dict
 
 def post_data(query, data):
+    start = time.time()
     db = pymysql.connect(host='101.101.210.225', user='jaeho', password='1234', db='openapi', charset='utf8')
     try:
         with db.cursor() as cursor:
@@ -68,13 +73,16 @@ def post_data(query, data):
             db.commit()
     finally:
         db.close()
-
+    print(f"post_data elapsed time : {time.time() - start}\n")
+    
 def main():
+    start = time.time()
     data = get_data()
     df = preprocess_data(data)
     query = make_insert_query(df.columns.to_list())
     result_data = df.to_dict('records')
     post_data(query, result_data)
-    
+    total_elapsed_time = f"total elapsed time : {time.time() - start}\n"
+    print(total_elapsed_time)
 if __name__ == "__main__":
     main()
