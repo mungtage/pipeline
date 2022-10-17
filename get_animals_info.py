@@ -81,21 +81,23 @@ def post_data(query_insert, data):
     print(f"post_data elapsed time : {time.time() - start}\n")
     
 def image_download(df):
-    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir('./images/')])
+    os.makedirs('./images', exist_ok=True)
+    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir('./images')])
     current_images = set(df["desertionNo"].to_list())
     target_images = current_images - previous_images
     
     current_images_json = df[df["desertionNo"].isin(target_images)][["desertionNo","popfile"]].to_dict("records")
 
-    # res = requests.get(target[0]['popfile'])
-    # open(f"./images/{target[0]['desertionNo']}.jpg", "wb").write(res.content)
+    for item_dict in tqdm(current_images_json):
+        responds = requests.get(item_dict['popfile'])
+        open(f"./images/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
     
     
 def main():
     start = time.time()
     
     data = get_data()
-    df = preprocess_data(data)
+    df = preprocess_data(data[:10])
     
     query_insert = make_query_insert(df.columns.to_list())
     result_data = df.to_dict('records')
