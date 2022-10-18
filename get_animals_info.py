@@ -91,7 +91,7 @@ def image_download(df):
 
     for item_dict in tqdm(current_images_json):
         responds = requests.get(item_dict['popfile'])
-        open(f"./images/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
+        open(f"{IMG_PATH}/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
     
     
 def main():
