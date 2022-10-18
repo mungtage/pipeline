@@ -81,8 +81,9 @@ def post_data(query_insert, data):
     print(f"post_data elapsed time : {time.time() - start}\n")
     
 def image_download(df):
-    os.makedirs('./images', exist_ok=True)
-    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir('./images')])
+    IMG_PATH = "./images/announcement"
+    os.makedirs(IMG_PATH, exist_ok=True)
+    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
     current_images = set(df["desertionNo"].to_list())
     target_images = current_images - previous_images
     
