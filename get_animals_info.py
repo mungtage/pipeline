@@ -85,9 +85,10 @@ def image_download(df):
     os.makedirs(IMG_PATH, exist_ok=True)
     previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
     current_images = set(df["desertionNo"].to_list())
-    target_images = current_images - previous_images
+    create_images = current_images - previous_images
+    delete_images = previous_images - current_images
     
-    current_images_json = df[df["desertionNo"].isin(target_images)][["desertionNo","popfile"]].to_dict("records")
+    current_images_json = df[df["desertionNo"].isin(create_images)][["desertionNo","popfile"]].to_dict("records")
 
     for item_dict in tqdm(current_images_json):
         responds = requests.get(item_dict['popfile'])
