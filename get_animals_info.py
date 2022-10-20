@@ -10,6 +10,7 @@ from pprint import pprint
 import pymysql
 import pandas as pd
 from utils.querys import make_query_insert, make_query_truncate
+from utils.image_pipeline import image_pipeline
 
 def get_url(API_Key, date, page_number = 1):
     dog_code = 417000
@@ -79,30 +80,6 @@ def post_data(query_insert, data):
     finally:
         db.close()
     print(f"post_data elapsed time : {time.time() - start}\n")
-    
-def save_images(IMG_PATH, previous_images, current_images, df):
-    create_images = current_images - previous_images
-    current_images_json = df[df["desertionNo"].isin(create_images)][["desertionNo","popfile"]].to_dict("records")
-
-    for item_dict in tqdm(current_images_json):
-        responds = requests.get(item_dict['popfile'])
-        open(f"{IMG_PATH}/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
-    # return
-
-def remove_images(IMG_PATH, previous_images, current_images):
-    delete_images = previous_images - current_images
-    print(delete_images)
-    for desertionNo in delete_images:
-        print(desertionNo)
-        os.remove(f"{IMG_PATH}/{desertionNo}.jpg")
-
-def image_pipeline(IMG_PATH, df):
-    os.makedirs(IMG_PATH, exist_ok=True)
-    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
-    current_images = set(df["desertionNo"].to_list())
-    
-    save_images(IMG_PATH, previous_images, current_images, df)
-    remove_images(IMG_PATH, previous_images, current_images)
     
 def main():
     IMG_PATH = "./images/announcement"
