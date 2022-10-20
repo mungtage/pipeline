@@ -80,22 +80,33 @@ def post_data(query_insert, data):
         db.close()
     print(f"post_data elapsed time : {time.time() - start}\n")
     
-def image_download(df):
-    IMG_PATH = "./images/announcement"
-    os.makedirs(IMG_PATH, exist_ok=True)
-    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
-    current_images = set(df["desertionNo"].to_list())
+def save_images(IMG_PATH, previous_images, current_images, df):
     create_images = current_images - previous_images
-    delete_images = previous_images - current_images
-    
     current_images_json = df[df["desertionNo"].isin(create_images)][["desertionNo","popfile"]].to_dict("records")
 
     for item_dict in tqdm(current_images_json):
         responds = requests.get(item_dict['popfile'])
         open(f"{IMG_PATH}/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
+    # return
+
+def remove_images(IMG_PATH, previous_images, current_images):
+    delete_images = previous_images - current_images
+    print(delete_images)
+    for desertionNo in delete_images:
+        print(desertionNo)
+        os.remove(f"{IMG_PATH}/{desertionNo}.jpg")
+
+def image_pipeline(IMG_PATH, df):
+    os.makedirs(IMG_PATH, exist_ok=True)
+    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
+    current_images = set(df["desertionNo"].to_list())
     
+    save_images(IMG_PATH, previous_images, current_images, df)
+    remove_images(IMG_PATH, previous_images, current_images)
     
 def main():
+    IMG_PATH = "./images/announcement"
+    
     start = time.time()
     
     data = get_data()
@@ -105,9 +116,10 @@ def main():
     result_data = df.to_dict('records')
     post_data(query_insert, result_data)
     
-    image_download(df)
+    image_pipeline(df, IMG_PATH)
 
     total_elapsed_time = f"total elapsed time : {time.time() - start}\n" 
     print(total_elapsed_time)
+    
 if __name__ == "__main__":
     main()
