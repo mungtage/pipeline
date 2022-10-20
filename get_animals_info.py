@@ -10,6 +10,7 @@ from pprint import pprint
 import pymysql
 import pandas as pd
 from utils.querys import make_query_insert, make_query_truncate
+from utils.image_pipeline import image_pipeline
 
 def get_url(API_Key, date, page_number = 1):
     dog_code = 417000
@@ -80,21 +81,9 @@ def post_data(query_insert, data):
         db.close()
     print(f"post_data elapsed time : {time.time() - start}\n")
     
-def image_download(df):
-    IMG_PATH = "./images/announcement"
-    os.makedirs(IMG_PATH, exist_ok=True)
-    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
-    current_images = set(df["desertionNo"].to_list())
-    target_images = current_images - previous_images
-    
-    current_images_json = df[df["desertionNo"].isin(target_images)][["desertionNo","popfile"]].to_dict("records")
-
-    for item_dict in tqdm(current_images_json):
-        responds = requests.get(item_dict['popfile'])
-        open(f"{IMG_PATH}/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
-    
-    
 def main():
+    IMG_PATH = "./images/announcement"
+    
     start = time.time()
     
     data = get_data()
@@ -104,9 +93,10 @@ def main():
     result_data = df.to_dict('records')
     post_data(query_insert, result_data)
     
-    image_download(df)
+    image_pipeline(df, IMG_PATH)
 
     total_elapsed_time = f"total elapsed time : {time.time() - start}\n" 
     print(total_elapsed_time)
+    
 if __name__ == "__main__":
     main()
