@@ -82,7 +82,7 @@ def post_data(query_insert, data):
     print(f"post_data elapsed time : {time.time() - start}\n")
     
 def main():
-    IMG_PATH = "./images/announcement"
+    IMG_PATH = "/home/aimungtage/images/announcement"
     
     start = time.time()
     
