@@ -21,7 +21,7 @@ def remove_images(IMG_PATH, previous_images, current_images, df):
 
 def image_pipeline(df, IMG_PATH):
     os.makedirs(IMG_PATH, exist_ok=True)
-    previous_images = set([os.path.splitext(os.path.basename(path))[0] for path in os.listdir(IMG_PATH)])
+    previous_images = set([os.path.splitext(file)[0] for _, _, files in os.walk(IMG_PATH) for file in files])
     current_images = set(df["desertionNo"].to_list())
     
     save_images(IMG_PATH, previous_images, current_images, df)
