@@ -15,7 +15,8 @@ def remove_images(IMG_PATH, previous_images, current_images, df):
     delete_images = previous_images - current_images
     delete_images_json = df[df["desertionNo"].isin(delete_images)][["desertionNo","happenDt"]].to_dict("records")
     for item_dict in tqdm(delete_images_json):
-        os.remove(f"{IMG_PATH}/{item_dict['desertionNo']}_{item_dict['happenDt']}.jpg")
+        os.makedirs(f"{IMG_PATH}/{item_dict['happenDt']}", exist_ok=True)
+        os.remove(f"{IMG_PATH}/{item_dict['happenDt']}/{item_dict['desertionNo']}.jpg")
 
 def image_pipeline(df, IMG_PATH):
     os.makedirs(IMG_PATH, exist_ok=True)
