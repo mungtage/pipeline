@@ -4,17 +4,18 @@ from tqdm import tqdm
 
 def save_images(IMG_PATH, previous_images, current_images, df):
     create_images = current_images - previous_images
-    current_images_json = df[df["desertionNo"].isin(create_images)][["desertionNo","popfile"]].to_dict("records")
+    current_images_json = df[df["desertionNo"].isin(create_images)][["desertionNo","popfile","happenDt"]].to_dict("records")
 
     for item_dict in tqdm(current_images_json):
         responds = requests.get(item_dict['popfile'])
-        open(f"{IMG_PATH}/{item_dict['desertionNo']}.jpg", "wb").write(responds.content)
+        open(f"{IMG_PATH}/{item_dict['desertionNo']}_{item_dict['happenDt']}.jpg", "wb").write(responds.content)
     # return
 
-def remove_images(IMG_PATH, previous_images, current_images):
+def remove_images(IMG_PATH, previous_images, current_images, df):
     delete_images = previous_images - current_images
-    for desertionNo in delete_images:
-        os.remove(f"{IMG_PATH}/{desertionNo}.jpg")
+    delete_images_json = df[df["desertionNo"].isin(delete_images)][["desertionNo","happenDt"]].to_dict("records")
+    for item_dict in tqdm(delete_images_json):
+        os.remove(f"{IMG_PATH}/{item_dict['desertionNo']}_{item_dict['happenDt']}.jpg")
 
 def image_pipeline(df, IMG_PATH):
     os.makedirs(IMG_PATH, exist_ok=True)
@@ -22,4 +23,4 @@ def image_pipeline(df, IMG_PATH):
     current_images = set(df["desertionNo"].to_list())
     
     save_images(IMG_PATH, previous_images, current_images, df)
-    remove_images(IMG_PATH, previous_images, current_images)
+    remove_images(IMG_PATH, previous_images, current_images, df)
